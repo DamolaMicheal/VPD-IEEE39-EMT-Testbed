@@ -1,0 +1,741 @@
+THREE-PHASE-FAULT EMT MODEL COMPLEXITY AND COMPUTATIONAL EFFORT
+==============================================================================
+Created: 2026-10-23T20:30:44.362
+Method: runtime introspection of the assembled PowerSystems/PSID model
+All timing values are measured wall-clock seconds on this machine.
+Timings include Julia execution/compilation costs incurred in this run.
+
+1. EXPERIMENT AND EXCITATION
+------------------------------------------------------------------------------
+Scenario: line_fault_only
+Scenario description: 3-phase-to-ground fault at 50.0% of line 1-2 at 0.1 s, cleared at 0.2 s by tripping line 1-2
+System base: 100.0 MVA
+Fundamental frequency: 60.0 Hz
+Simulation interval: 0.0 to 0.5 s
+Load-change enabled: false
+Fault enabled: true
+Scheduled load events: 0
+Scheduled switching events: 2
+Fault type: three-phase-to-ground
+Fault specification: line_fault_line_trip
+Fault branch (from-to): 1--2
+Fault location fraction from sending end: 0.5
+Fault application: 0.1 s
+Fault clearing: 0.2 s
+Fault duration: 0.1 s
+Fault resistance Rf: 0.0001 pu
+Fault reactance Xf: 0.0 pu
+Fault magnitude |Zf|: 0.0001 pu
+Fault-on and post-trip topology are imposed by original NetworkSwitch callbacks.
+The line-fault midpoint is reduced via the original Ybus fault construction.
+Perturbation objects passed to PSID: 2
+Sine update interval: 2.5e-5 s (configured but inactive in fault-only scenario)
+Export sampling interval: 2.5e-5 s; nominal rate = 40000.0 Hz
+Resampling enabled: true
+SG buses: [33, 35, 37, 38, 39] | GFM buses: [31, 36] | GFL buses: [30, 34, 32]
+Known-forming buses for VPD: [31, 33, 35, 36, 37, 38, 39]
+Reference bus: 39
+
+2. NUMERICAL DAE SOLVER
+------------------------------------------------------------------------------
+Model formulation: ResidualModel (DAE)
+Integrator: Sundials.IDA, BDF, linear_solver=:Dense
+Maximum BDF order: 5
+Absolute tolerance: 1.0e-8
+Relative tolerance: 1.0e-8
+Initial time step (dtinit): 2.5e-5 s
+Maximum internal time step (dtmax): 2.5e-5 s
+IMPORTANT: dtmax and export interval are NOT fixed solver steps.
+The solver adapts its accepted steps; export sampling is separate.
+
+3. COMPUTATIONAL EFFORT (WALL CLOCK)
+------------------------------------------------------------------------------
+Network setup, power flow, devices, perturbations, simulation build and small-signal check: 0.996365 s
+IDA execute! integration: 225.786798 s
+read_results: 0.0 s
+Network P/Q reconstruction: 17.307217 s
+VPD voltage/angle/PQ CSV export and selected-bus figures: 24.210622 s
+TOTAL main() wall clock through CSV export: 268.301003 s
+Total excludes writing this report and copying the Julia source snapshot.
+For a cold-start end-to-end benchmark, time the Julia process externally.
+
+4. EXECUTION HARDWARE / SOFTWARE
+------------------------------------------------------------------------------
+Julia version: 1.12.4
+Julia threads: 1
+CPU model: arrowlake
+CPU threads: 16
+Operating system: NT  architecture: x86_64
+Total RAM (GiB): 31.46
+Active Julia environment: C:\Users\ajeye\.julia\environments\v1.12\Project.toml
+PowerSystems.jl version: 4.6.2
+PowerSimulationsDynamics.jl version: 0.15.0
+Sundials.jl version: 4.28.0
+PowerFlows.jl version: 0.9.0
+
+5. POWER-SYSTEM RESOURCE MODELS AND COMPONENT STATE COUNTS
+------------------------------------------------------------------------------
+Synchronous generators: RoundRotorQuadratic machine, SingleMass shaft,
+  AVRTypeI excitation, TGTypeI prime mover/governor, PSSFixed.
+Grid-forming inverters: AverageConverter, VirtualInertia active control,
+  ReactivePowerDroop, VoltageModeControl voltage/current loops,
+  FixedDCSource, FixedFrequency, LCLFilter.
+Grid-following inverters: AverageConverter, ActivePowerPI and
+  ReactivePowerPI outer loops, CurrentModeControl inner loop,
+  KauraPLL, FixedDCSource, LCLFilter.
+Converter models are averaged; individual semiconductor switching is not modeled.
+Component state orders are obtained from assembled models, NOT preassigned
+  as a generic sixth-order SG, 15th-order GFM, or 20th-order GFL.
+The machine, shaft, excitation, prime mover, active/reactive control,
+  inner controllers, PLL, and LCL filter are enumerated separately below.
+State symbols/counts are reported only where exposed by this PSY installation.
+
+SYNCHRONOUS GENERATORS (5 units)
+
+Bus 33 | DynamicGenerator{RoundRotorQuadratic, SingleMass, AVRTypeI, TGTypeI, PSSFixed}
+  Resource: DynamicGenerator{RoundRotorQuadratic, SingleMass, AVRTypeI, TGTypeI, PSSFixed}
+    declared_state_count = 13
+    state_symbols = eq_p, ed_p, ψ_kd, ψ_kq, δ, ω, Vf, Vr1, Vr2, Vm, x_g1, x_g2, x_g3
+    ω_ref = 1.0
+    base_power = 1000.0
+  machine: RoundRotorQuadratic
+    declared_state_count = 4
+    state_symbols = eq_p, ed_p, ψ_kd, ψ_kq
+    saturation_coeffs = (0.0, 0.0)
+  shaft: SingleMass
+    declared_state_count = 2
+    state_symbols = δ, ω
+    H = 2.86
+    D = 40.0
+  avr: AVRTypeI
+    declared_state_count = 4
+    state_symbols = Vf, Vr1, Vr2, Vm
+    Ka = 15.0
+    Ke = 1.0
+    Kf = 0.08
+    Ta = 0.03
+    Te = 0.8
+    Tf = 1.0
+    Tr = 0.08
+    Va_lim = (min = -10.0, max = 10.0)
+    Ae = 0.001
+    Be = 1.0
+    V_ref = 1.1081670627054225
+  prime_mover: TGTypeI
+    declared_state_count = 3
+    state_symbols = x_g1, x_g2, x_g3
+    R = 0.05
+    Ts = 0.5
+    Tc = 0.001
+    T3 = 0.001
+    T4 = 0.001
+    T5 = 0.001
+    valve_position_limits = (min = -5.0, max = 5.0)
+    P_ref = 0.633007813840469
+  pss: PSSFixed
+    declared_state_count = 0
+    state_symbols = 
+    V_pss = 0.0
+  Subcomponent state-count sum: 13 | resource state count: 13 | equality: true
+
+Bus 35 | DynamicGenerator{RoundRotorQuadratic, SingleMass, AVRTypeI, TGTypeI, PSSFixed}
+  Resource: DynamicGenerator{RoundRotorQuadratic, SingleMass, AVRTypeI, TGTypeI, PSSFixed}
+    declared_state_count = 13
+    state_symbols = eq_p, ed_p, ψ_kd, ψ_kq, δ, ω, Vf, Vr1, Vr2, Vm, x_g1, x_g2, x_g3
+    ω_ref = 1.0
+    base_power = 1000.0
+  machine: RoundRotorQuadratic
+    declared_state_count = 4
+    state_symbols = eq_p, ed_p, ψ_kd, ψ_kq
+    saturation_coeffs = (0.0, 0.0)
+  shaft: SingleMass
+    declared_state_count = 2
+    state_symbols = δ, ω
+    H = 3.48
+    D = 40.0
+  avr: AVRTypeI
+    declared_state_count = 4
+    state_symbols = Vf, Vr1, Vr2, Vm
+    Ka = 15.0
+    Ke = 1.0
+    Kf = 0.08
+    Ta = 0.03
+    Te = 0.8
+    Tf = 1.0
+    Tr = 0.08
+    Va_lim = (min = -10.0, max = 10.0)
+    Ae = 0.001
+    Be = 1.0
+    V_ref = 1.1748599485491549
+  prime_mover: TGTypeI
+    declared_state_count = 3
+    state_symbols = x_g1, x_g2, x_g3
+    R = 0.05
+    Ts = 0.5
+    Tc = 0.001
+    T3 = 0.001
+    T4 = 0.001
+    T5 = 0.001
+    valve_position_limits = (min = -5.0, max = 5.0)
+    P_ref = 0.6309972335265627
+  pss: PSSFixed
+    declared_state_count = 0
+    state_symbols = 
+    V_pss = 0.0
+  Subcomponent state-count sum: 13 | resource state count: 13 | equality: true
+
+Bus 37 | DynamicGenerator{RoundRotorQuadratic, SingleMass, AVRTypeI, TGTypeI, PSSFixed}
+  Resource: DynamicGenerator{RoundRotorQuadratic, SingleMass, AVRTypeI, TGTypeI, PSSFixed}
+    declared_state_count = 13
+    state_symbols = eq_p, ed_p, ψ_kd, ψ_kq, δ, ω, Vf, Vr1, Vr2, Vm, x_g1, x_g2, x_g3
+    ω_ref = 1.0
+    base_power = 1000.0
+  machine: RoundRotorQuadratic
+    declared_state_count = 4
+    state_symbols = eq_p, ed_p, ψ_kd, ψ_kq
+    saturation_coeffs = (0.0, 0.0)
+  shaft: SingleMass
+    declared_state_count = 2
+    state_symbols = δ, ω
+    H = 2.43
+    D = 40.0
+  avr: AVRTypeI
+    declared_state_count = 4
+    state_symbols = Vf, Vr1, Vr2, Vm
+    Ka = 15.0
+    Ke = 1.0
+    Kf = 0.08
+    Ta = 0.03
+    Te = 0.8
+    Tf = 1.0
+    Tr = 0.08
+    Va_lim = (min = -10.0, max = 10.0)
+    Ae = 0.001
+    Be = 1.0
+    V_ref = 1.1282675974636514
+  prime_mover: TGTypeI
+    declared_state_count = 3
+    state_symbols = x_g1, x_g2, x_g3
+    R = 0.05
+    Ts = 0.5
+    Tc = 0.001
+    T3 = 0.001
+    T4 = 0.001
+    T5 = 0.001
+    valve_position_limits = (min = -5.0, max = 5.0)
+    P_ref = 0.5406907437599315
+  pss: PSSFixed
+    declared_state_count = 0
+    state_symbols = 
+    V_pss = 0.0
+  Subcomponent state-count sum: 13 | resource state count: 13 | equality: true
+
+Bus 38 | DynamicGenerator{RoundRotorQuadratic, SingleMass, AVRTypeI, TGTypeI, PSSFixed}
+  Resource: DynamicGenerator{RoundRotorQuadratic, SingleMass, AVRTypeI, TGTypeI, PSSFixed}
+    declared_state_count = 13
+    state_symbols = eq_p, ed_p, ψ_kd, ψ_kq, δ, ω, Vf, Vr1, Vr2, Vm, x_g1, x_g2, x_g3
+    ω_ref = 1.0
+    base_power = 1000.0
+  machine: RoundRotorQuadratic
+    declared_state_count = 4
+    state_symbols = eq_p, ed_p, ψ_kd, ψ_kq
+    saturation_coeffs = (0.0, 0.0)
+  shaft: SingleMass
+    declared_state_count = 2
+    state_symbols = δ, ω
+    H = 3.45
+    D = 40.0
+  avr: AVRTypeI
+    declared_state_count = 4
+    state_symbols = Vf, Vr1, Vr2, Vm
+    Ka = 15.0
+    Ke = 1.0
+    Kf = 0.08
+    Ta = 0.03
+    Te = 0.8
+    Tf = 1.0
+    Tr = 0.08
+    Va_lim = (min = -10.0, max = 10.0)
+    Ae = 0.001
+    Be = 1.0
+    V_ref = 1.158067126668796
+  prime_mover: TGTypeI
+    declared_state_count = 3
+    state_symbols = x_g1, x_g2, x_g3
+    R = 0.05
+    Ts = 0.5
+    Tc = 0.001
+    T3 = 0.001
+    T4 = 0.001
+    T5 = 0.001
+    valve_position_limits = (min = -5.0, max = 5.0)
+    P_ref = 0.8316413074297424
+  pss: PSSFixed
+    declared_state_count = 0
+    state_symbols = 
+    V_pss = 0.0
+  Subcomponent state-count sum: 13 | resource state count: 13 | equality: true
+
+Bus 39 | DynamicGenerator{RoundRotorQuadratic, SingleMass, AVRTypeI, TGTypeI, PSSFixed}
+  Resource: DynamicGenerator{RoundRotorQuadratic, SingleMass, AVRTypeI, TGTypeI, PSSFixed}
+    declared_state_count = 13
+    state_symbols = eq_p, ed_p, ψ_kd, ψ_kq, δ, ω, Vf, Vr1, Vr2, Vm, x_g1, x_g2, x_g3
+    ω_ref = 1.0
+    base_power = 10000.0
+  machine: RoundRotorQuadratic
+    declared_state_count = 4
+    state_symbols = eq_p, ed_p, ψ_kd, ψ_kq
+    saturation_coeffs = (0.0, 0.0)
+  shaft: SingleMass
+    declared_state_count = 2
+    state_symbols = δ, ω
+    H = 5.0
+    D = 48.0
+  avr: AVRTypeI
+    declared_state_count = 4
+    state_symbols = Vf, Vr1, Vr2, Vm
+    Ka = 15.0
+    Ke = 1.0
+    Kf = 0.08
+    Ta = 0.03
+    Te = 0.8
+    Tf = 1.0
+    Tr = 0.08
+    Va_lim = (min = -10.0, max = 10.0)
+    Ae = 0.001
+    Be = 1.0
+    V_ref = 1.0983995925461125
+  prime_mover: TGTypeI
+    declared_state_count = 3
+    state_symbols = x_g1, x_g2, x_g3
+    R = 0.05
+    Ts = 0.5
+    Tc = 0.001
+    T3 = 0.001
+    T4 = 0.001
+    T5 = 0.001
+    valve_position_limits = (min = -5.0, max = 5.0)
+    P_ref = 0.013452659416758052
+  pss: PSSFixed
+    declared_state_count = 0
+    state_symbols = 
+    V_pss = 0.0
+  Subcomponent state-count sum: 13 | resource state count: 13 | equality: true
+
+GRID-FORMING INVERTERS (2 units)
+
+Bus 31 | DynamicInverter{AverageConverter, OuterControl{VirtualInertia, ReactivePowerDroop}, VoltageModeControl, FixedDCSource, FixedFrequency, LCLFilter, Nothing}
+  Resource: DynamicInverter{AverageConverter, OuterControl{VirtualInertia, ReactivePowerDroop}, VoltageModeControl, FixedDCSource, FixedFrequency, LCLFilter, Nothing}
+    declared_state_count = 15
+    state_symbols = θ_oc, ω_oc, q_oc, ξd_ic, ξq_ic, γd_ic, γq_ic, ϕd_ic, ϕq_ic, ir_cnv, ii_cnv, vr_filter, vi_filter, ir_filter, ii_filter
+    ω_ref = 1.0
+    base_power = 1000.0
+  converter: AverageConverter
+    declared_state_count = 0
+    state_symbols = 
+    rated_voltage = 1.0
+    rated_current = 1.0
+  outer_control: OuterControl{VirtualInertia, ReactivePowerDroop}
+    declared_state_count = 3
+    state_symbols = θ_oc, ω_oc, q_oc
+  outer_control.active_power_control: VirtualInertia
+    declared_state_count = 2
+    state_symbols = θ_oc, ω_oc
+    Ta = 6.06
+    kd = 12.5
+    kω = 12.5
+    P_ref = 0.522943856440936
+  outer_control.reactive_power_control: ReactivePowerDroop
+    declared_state_count = 1
+    state_symbols = q_oc
+    kq = 0.05
+    ωf = 10.0
+    V_ref = 1.0297562797709747
+  inner_control: VoltageModeControl
+    declared_state_count = 6
+    state_symbols = ξd_ic, ξq_ic, γd_ic, γq_ic, ϕd_ic, ϕq_ic
+    kpv = 1.0
+    kiv = 1000.0
+    kffv = 0.0
+    rv = 0.0
+    lv = 0.0
+    kpc = 3.0
+    kic = 600.0
+    kffi = 0.0
+    ωad = 2000.0
+    kad = 10.0
+  dc_source: FixedDCSource
+    declared_state_count = 0
+    state_symbols = 
+    voltage = 1200.0
+  freq_estimator: FixedFrequency
+    declared_state_count = 0
+    state_symbols = 
+    frequency = 1.0
+  filter: LCLFilter
+    declared_state_count = 6
+    state_symbols = ir_cnv, ii_cnv, vr_filter, vi_filter, ir_filter, ii_filter
+    lf = 0.08
+    rf = 0.05
+    cf = 0.074
+    lg = 0.2
+    rg = 0.04
+  limiter: not present
+  Subcomponent state-count sum: 15 | resource state count: 15 | equality: true
+
+Bus 36 | DynamicInverter{AverageConverter, OuterControl{VirtualInertia, ReactivePowerDroop}, VoltageModeControl, FixedDCSource, FixedFrequency, LCLFilter, Nothing}
+  Resource: DynamicInverter{AverageConverter, OuterControl{VirtualInertia, ReactivePowerDroop}, VoltageModeControl, FixedDCSource, FixedFrequency, LCLFilter, Nothing}
+    declared_state_count = 15
+    state_symbols = θ_oc, ω_oc, q_oc, ξd_ic, ξq_ic, γd_ic, γq_ic, ϕd_ic, ϕq_ic, ir_cnv, ii_cnv, vr_filter, vi_filter, ir_filter, ii_filter
+    ω_ref = 1.0
+    base_power = 1000.0
+  converter: AverageConverter
+    declared_state_count = 0
+    state_symbols = 
+    rated_voltage = 1.0
+    rated_current = 1.0
+  outer_control: OuterControl{VirtualInertia, ReactivePowerDroop}
+    declared_state_count = 3
+    state_symbols = θ_oc, ω_oc, q_oc
+  outer_control.active_power_control: VirtualInertia
+    declared_state_count = 2
+    state_symbols = θ_oc, ω_oc
+    Ta = 8.4
+    kd = 12.5
+    kω = 12.5
+    P_ref = 0.5723616975540828
+  outer_control.reactive_power_control: ReactivePowerDroop
+    declared_state_count = 1
+    state_symbols = q_oc
+    kq = 0.05
+    ωf = 10.0
+    V_ref = 1.1251339458648155
+  inner_control: VoltageModeControl
+    declared_state_count = 6
+    state_symbols = ξd_ic, ξq_ic, γd_ic, γq_ic, ϕd_ic, ϕq_ic
+    kpv = 1.0
+    kiv = 1000.0
+    kffv = 0.0
+    rv = 0.0
+    lv = 0.0
+    kpc = 3.0
+    kic = 600.0
+    kffi = 0.0
+    ωad = 2000.0
+    kad = 10.0
+  dc_source: FixedDCSource
+    declared_state_count = 0
+    state_symbols = 
+    voltage = 1200.0
+  freq_estimator: FixedFrequency
+    declared_state_count = 0
+    state_symbols = 
+    frequency = 1.0
+  filter: LCLFilter
+    declared_state_count = 6
+    state_symbols = ir_cnv, ii_cnv, vr_filter, vi_filter, ir_filter, ii_filter
+    lf = 0.08
+    rf = 0.05
+    cf = 0.074
+    lg = 0.2
+    rg = 0.04
+  limiter: not present
+  Subcomponent state-count sum: 15 | resource state count: 15 | equality: true
+
+GRID-FOLLOWING INVERTERS (3 units)
+
+Bus 30 | DynamicInverter{AverageConverter, OuterControl{ActivePowerPI, ReactivePowerPI}, CurrentModeControl, FixedDCSource, KauraPLL, LCLFilter, Nothing}
+  Resource: DynamicInverter{AverageConverter, OuterControl{ActivePowerPI, ReactivePowerPI}, CurrentModeControl, FixedDCSource, KauraPLL, LCLFilter, Nothing}
+    declared_state_count = 16
+    state_symbols = σp_oc, p_oc, σq_oc, q_oc, γd_ic, γq_ic, vd_pll, vq_pll, ε_pll, θ_pll, ir_cnv, ii_cnv, vr_filter, vi_filter, ir_filter, ii_filter
+    ω_ref = 1.0
+    base_power = 1000.0
+  converter: AverageConverter
+    declared_state_count = 0
+    state_symbols = 
+    rated_voltage = 1.0
+    rated_current = 1.0
+  outer_control: OuterControl{ActivePowerPI, ReactivePowerPI}
+    declared_state_count = 4
+    state_symbols = σp_oc, p_oc, σq_oc, q_oc
+  outer_control.active_power_control: ActivePowerPI
+    declared_state_count = 2
+    state_symbols = σp_oc, p_oc
+    Kp_p = 0.8
+    Ki_p = 8.0
+    ωz = 80.0
+    P_ref = 0.2330578271877247
+    ext["Kω"] = 35.0
+  outer_control.reactive_power_control: ReactivePowerPI
+    declared_state_count = 2
+    state_symbols = σq_oc, q_oc
+    Kp_q = 2.0
+    Ki_q = 30.0
+    ωf = 500.0
+    V_ref = 1.048
+    Q_ref = 0.1915293010319147
+  inner_control: CurrentModeControl
+    declared_state_count = 2
+    state_symbols = γd_ic, γq_ic
+    kpc = 1.2
+    kic = 300.0
+    kffv = 0.0
+  dc_source: FixedDCSource
+    declared_state_count = 0
+    state_symbols = 
+    voltage = 1200.0
+  freq_estimator: KauraPLL
+    declared_state_count = 4
+    state_symbols = vd_pll, vq_pll, ε_pll, θ_pll
+    ω_lp = 80.0
+    kp_pll = 0.03
+    ki_pll = 1.5
+  filter: LCLFilter
+    declared_state_count = 6
+    state_symbols = ir_cnv, ii_cnv, vr_filter, vi_filter, ir_filter, ii_filter
+    lf = 0.08
+    rf = 0.05
+    cf = 0.074
+    lg = 0.2
+    rg = 0.04
+  limiter: not present
+  Subcomponent state-count sum: 16 | resource state count: 16 | equality: true
+
+Bus 34 | DynamicInverter{AverageConverter, OuterControl{ActivePowerPI, ReactivePowerPI}, CurrentModeControl, FixedDCSource, KauraPLL, LCLFilter, Nothing}
+  Resource: DynamicInverter{AverageConverter, OuterControl{ActivePowerPI, ReactivePowerPI}, CurrentModeControl, FixedDCSource, KauraPLL, LCLFilter, Nothing}
+    declared_state_count = 16
+    state_symbols = σp_oc, p_oc, σq_oc, q_oc, γd_ic, γq_ic, vd_pll, vq_pll, ε_pll, θ_pll, ir_cnv, ii_cnv, vr_filter, vi_filter, ir_filter, ii_filter
+    ω_ref = 1.0
+    base_power = 600.0
+  converter: AverageConverter
+    declared_state_count = 0
+    state_symbols = 
+    rated_voltage = 1.0
+    rated_current = 1.0
+  outer_control: OuterControl{ActivePowerPI, ReactivePowerPI}
+    declared_state_count = 4
+    state_symbols = σp_oc, p_oc, σq_oc, q_oc
+  outer_control.active_power_control: ActivePowerPI
+    declared_state_count = 2
+    state_symbols = σp_oc, p_oc
+    Kp_p = 0.8
+    Ki_p = 8.0
+    ωz = 80.0
+    P_ref = 0.876537911905776
+    ext["Kω"] = 35.0
+  outer_control.reactive_power_control: ReactivePowerPI
+    declared_state_count = 2
+    state_symbols = σq_oc, q_oc
+    Kp_q = 2.0
+    Ki_q = 30.0
+    ωf = 500.0
+    V_ref = 1.012
+    Q_ref = 0.3683698562855764
+  inner_control: CurrentModeControl
+    declared_state_count = 2
+    state_symbols = γd_ic, γq_ic
+    kpc = 1.2
+    kic = 300.0
+    kffv = 0.0
+  dc_source: FixedDCSource
+    declared_state_count = 0
+    state_symbols = 
+    voltage = 1200.0
+  freq_estimator: KauraPLL
+    declared_state_count = 4
+    state_symbols = vd_pll, vq_pll, ε_pll, θ_pll
+    ω_lp = 80.0
+    kp_pll = 0.03
+    ki_pll = 1.5
+  filter: LCLFilter
+    declared_state_count = 6
+    state_symbols = ir_cnv, ii_cnv, vr_filter, vi_filter, ir_filter, ii_filter
+    lf = 0.08
+    rf = 0.05
+    cf = 0.074
+    lg = 0.2
+    rg = 0.04
+  limiter: not present
+  Subcomponent state-count sum: 16 | resource state count: 16 | equality: true
+
+Bus 32 | DynamicInverter{AverageConverter, OuterControl{ActivePowerPI, ReactivePowerPI}, CurrentModeControl, FixedDCSource, KauraPLL, LCLFilter, Nothing}
+  Resource: DynamicInverter{AverageConverter, OuterControl{ActivePowerPI, ReactivePowerPI}, CurrentModeControl, FixedDCSource, KauraPLL, LCLFilter, Nothing}
+    declared_state_count = 16
+    state_symbols = σp_oc, p_oc, σq_oc, q_oc, γd_ic, γq_ic, vd_pll, vq_pll, ε_pll, θ_pll, ir_cnv, ii_cnv, vr_filter, vi_filter, ir_filter, ii_filter
+    ω_ref = 1.0
+    base_power = 1000.0
+  converter: AverageConverter
+    declared_state_count = 0
+    state_symbols = 
+    rated_voltage = 1.0
+    rated_current = 1.0
+  outer_control: OuterControl{ActivePowerPI, ReactivePowerPI}
+    declared_state_count = 4
+    state_symbols = σp_oc, p_oc, σq_oc, q_oc
+  outer_control.active_power_control: ActivePowerPI
+    declared_state_count = 2
+    state_symbols = σp_oc, p_oc
+    Kp_p = 0.8
+    Ki_p = 8.0
+    ωz = 80.0
+    P_ref = 0.6677736110045249
+    ext["Kω"] = 35.0
+  outer_control.reactive_power_control: ReactivePowerPI
+    declared_state_count = 2
+    state_symbols = σq_oc, q_oc
+    Kp_q = 2.0
+    Ki_q = 30.0
+    ωf = 500.0
+    V_ref = 0.983
+    Q_ref = 0.17169993355155677
+  inner_control: CurrentModeControl
+    declared_state_count = 2
+    state_symbols = γd_ic, γq_ic
+    kpc = 1.2
+    kic = 300.0
+    kffv = 0.0
+  dc_source: FixedDCSource
+    declared_state_count = 0
+    state_symbols = 
+    voltage = 1200.0
+  freq_estimator: KauraPLL
+    declared_state_count = 4
+    state_symbols = vd_pll, vq_pll, ε_pll, θ_pll
+    ω_lp = 80.0
+    kp_pll = 0.03
+    ki_pll = 1.5
+  filter: LCLFilter
+    declared_state_count = 6
+    state_symbols = ir_cnv, ii_cnv, vr_filter, vi_filter, ir_filter, ii_filter
+    lf = 0.08
+    rf = 0.05
+    cf = 0.074
+    lg = 0.2
+    rg = 0.04
+  limiter: not present
+  Subcomponent state-count sum: 16 | resource state count: 16 | equality: true
+
+Dynamic resources resolved: 10 of 10
+Sum of AVAILABLE resource state counts: 143
+Missing state counts must not be treated as zero.
+
+6. TRANSMISSION NETWORK AND BRANCH DYNAMICS
+------------------------------------------------------------------------------
+Buses in network: 39
+Dynamic RL branches assembled: 46
+Dynamic transformer equivalents requested: true
+Transformer equivalent charging b: 0.1 pu
+Original network: 34 lines plus 12 transformers (when all 46 conversions succeed).
+Transformer replacements use unit-ratio lines; original tap ratios are not retained.
+Series-resistance floor: 0.002 pu | X/R cap enabled: false
+  branch 1: (1, 39) | name=bus-1-bus-39-i_2 | states=2 [Il_R, Il_I] | r=0.001 x=0.025 b=(from = 0.375, to = 0.375)
+  branch 2: (1, 2) | name=bus-1-bus-2-i_1 | states=2 [Il_R, Il_I] | r=0.004 x=0.041 b=(from = 0.349, to = 0.349)
+  branch 3: (2, 30) | name=dynxf_bus-2-bus-30-i_35 | states=2 [Il_R, Il_I] | r=0.002 x=0.018 b=(from = 0.05, to = 0.05)
+  branch 4: (25, 37) | name=dynxf_bus-25-bus-37-i_45 | states=2 [Il_R, Il_I] | r=0.001 x=0.023 b=(from = 0.05, to = 0.05)
+  branch 5: (14, 15) | name=bus-14-bus-15-i_19 | states=2 [Il_R, Il_I] | r=0.002 x=0.022 b=(from = 0.183, to = 0.183)
+  branch 6: (4, 14) | name=bus-4-bus-14-i_8 | states=2 [Il_R, Il_I] | r=0.001 x=0.013 b=(from = 0.069, to = 0.069)
+  branch 7: (19, 20) | name=dynxf_bus-19-bus-20-i_40 | states=2 [Il_R, Il_I] | r=0.001 x=0.014 b=(from = 0.05, to = 0.05)
+  branch 8: (10, 13) | name=bus-10-bus-13-i_17 | states=2 [Il_R, Il_I] | r=0.002 x=0.004 b=(from = 0.036, to = 0.036)
+  branch 9: (6, 7) | name=bus-6-bus-7-i_11 | states=2 [Il_R, Il_I] | r=0.001 x=0.009 b=(from = 0.057, to = 0.057)
+  branch 10: (20, 34) | name=dynxf_bus-20-bus-34-i_42 | states=2 [Il_R, Il_I] | r=0.001 x=0.018 b=(from = 0.05, to = 0.05)
+  branch 11: (3, 4) | name=bus-3-bus-4-i_5 | states=2 [Il_R, Il_I] | r=0.001 x=0.021 b=(from = 0.111, to = 0.111)
+  branch 12: (2, 3) | name=bus-2-bus-3-i_3 | states=2 [Il_R, Il_I] | r=0.001 x=0.015 b=(from = 0.129, to = 0.129)
+  branch 13: (23, 36) | name=dynxf_bus-23-bus-36-i_44 | states=2 [Il_R, Il_I] | r=0.002 x=0.027 b=(from = 0.05, to = 0.05)
+  branch 14: (19, 33) | name=dynxf_bus-19-bus-33-i_41 | states=2 [Il_R, Il_I] | r=0.001 x=0.014 b=(from = 0.05, to = 0.05)
+  branch 15: (8, 9) | name=bus-8-bus-9-i_14 | states=2 [Il_R, Il_I] | r=0.002 x=0.036 b=(from = 0.19, to = 0.19)
+  branch 16: (4, 5) | name=bus-4-bus-5-i_7 | states=2 [Il_R, Il_I] | r=0.001 x=0.013 b=(from = 0.067, to = 0.067)
+  branch 17: (26, 27) | name=bus-26-bus-27-i_31 | states=2 [Il_R, Il_I] | r=0.001 x=0.015 b=(from = 0.12, to = 0.12)
+  branch 18: (6, 31) | name=dynxf_bus-6-bus-31-i_36 | states=2 [Il_R, Il_I] | r=0.002 x=0.025 b=(from = 0.05, to = 0.05)
+  branch 19: (25, 26) | name=bus-25-bus-26-i_30 | states=2 [Il_R, Il_I] | r=0.003 x=0.032 b=(from = 0.256, to = 0.256)
+  branch 20: (16, 19) | name=bus-16-bus-19-i_22 | states=2 [Il_R, Il_I] | r=0.002 x=0.02 b=(from = 0.152, to = 0.152)
+  branch 21: (5, 8) | name=bus-5-bus-8-i_10 | states=2 [Il_R, Il_I] | r=0.001 x=0.011 b=(from = 0.074, to = 0.074)
+  branch 22: (17, 27) | name=bus-17-bus-27-i_26 | states=2 [Il_R, Il_I] | r=0.001 x=0.017 b=(from = 0.161, to = 0.161)
+  branch 23: (23, 24) | name=bus-23-bus-24-i_29 | states=2 [Il_R, Il_I] | r=0.002 x=0.035 b=(from = 0.181, to = 0.181)
+  branch 24: (12, 13) | name=dynxf_bus-12-bus-13-i_39 | states=2 [Il_R, Il_I] | r=0.002 x=0.043 b=(from = 0.05, to = 0.05)
+  branch 25: (2, 25) | name=bus-2-bus-25-i_4 | states=2 [Il_R, Il_I] | r=0.007 x=0.009 b=(from = 0.073, to = 0.073)
+  branch 26: (29, 38) | name=dynxf_bus-29-bus-38-i_46 | states=2 [Il_R, Il_I] | r=0.001 x=0.016 b=(from = 0.05, to = 0.05)
+  branch 27: (16, 21) | name=bus-16-bus-21-i_23 | states=2 [Il_R, Il_I] | r=0.0005 x=0.014 b=(from = 0.127, to = 0.127)
+  branch 28: (5, 6) | name=bus-5-bus-6-i_9 | states=2 [Il_R, Il_I] | r=0.002 x=0.003 b=(from = 0.022, to = 0.022)
+  branch 29: (22, 35) | name=dynxf_bus-22-bus-35-i_43 | states=2 [Il_R, Il_I] | r=0.002 x=0.014 b=(from = 0.05, to = 0.05)
+  branch 30: (28, 29) | name=bus-28-bus-29-i_34 | states=2 [Il_R, Il_I] | r=0.001 x=0.015 b=(from = 0.125, to = 0.125)
+  branch 31: (21, 22) | name=bus-21-bus-22-i_27 | states=2 [Il_R, Il_I] | r=0.0005 x=0.014 b=(from = 0.128, to = 0.128)
+  branch 32: (15, 16) | name=bus-15-bus-16-i_20 | states=2 [Il_R, Il_I] | r=0.001 x=0.009 b=(from = 0.086, to = 0.086)
+  branch 33: (12, 11) | name=dynxf_bus-12-bus-11-i_38 | states=2 [Il_R, Il_I] | r=0.002 x=0.043 b=(from = 0.05, to = 0.05)
+  branch 34: (22, 23) | name=bus-22-bus-23-i_28 | states=2 [Il_R, Il_I] | r=0.001 x=0.01 b=(from = 0.092, to = 0.092)
+  branch 35: (6, 11) | name=bus-6-bus-11-i_12 | states=2 [Il_R, Il_I] | r=0.001 x=0.008 b=(from = 0.069, to = 0.069)
+  branch 36: (26, 29) | name=bus-26-bus-29-i_33 | states=2 [Il_R, Il_I] | r=0.006 x=0.063 b=(from = 0.514, to = 0.514)
+  branch 37: (3, 18) | name=bus-3-bus-18-i_6 | states=2 [Il_R, Il_I] | r=0.001 x=0.013 b=(from = 0.107, to = 0.107)
+  branch 38: (9, 39) | name=bus-9-bus-39-i_15 | states=2 [Il_R, Il_I] | r=0.001 x=0.025 b=(from = 0.6, to = 0.6)
+  branch 39: (17, 18) | name=bus-17-bus-18-i_25 | states=2 [Il_R, Il_I] | r=0.001 x=0.008 b=(from = 0.066, to = 0.066)
+  branch 40: (26, 28) | name=bus-26-bus-28-i_32 | states=2 [Il_R, Il_I] | r=0.004 x=0.047 b=(from = 0.39, to = 0.39)
+  branch 41: (13, 14) | name=bus-13-bus-14-i_18 | states=2 [Il_R, Il_I] | r=0.001 x=0.01 b=(from = 0.086, to = 0.086)
+  branch 42: (7, 8) | name=bus-7-bus-8-i_13 | states=2 [Il_R, Il_I] | r=0.002 x=0.005 b=(from = 0.039, to = 0.039)
+  branch 43: (16, 17) | name=bus-16-bus-17-i_21 | states=2 [Il_R, Il_I] | r=0.001 x=0.009 b=(from = 0.067, to = 0.067)
+  branch 44: (16, 24) | name=bus-16-bus-24-i_24 | states=2 [Il_R, Il_I] | r=0.002 x=0.006 b=(from = 0.034, to = 0.034)
+  branch 45: (10, 32) | name=dynxf_bus-10-bus-32-i_37 | states=2 [Il_R, Il_I] | r=0.002 x=0.02 b=(from = 0.05, to = 0.05)
+  branch 46: (10, 11) | name=bus-10-bus-11-i_16 | states=2 [Il_R, Il_I] | r=0.002 x=0.004 b=(from = 0.036, to = 0.036)
+Sum of AVAILABLE dynamic RL branch state counts: 92
+Each dynamic RL branch has direct/quadrature currents when fully modeled.
+Resource + RL branch state-count subtotal: 235
+This subtotal EXCLUDES bus-voltage and any additional DAE variables.
+This subtotal is not a verified total if some component state metadata are unavailable.
+PSID may treat d/q bus voltages as differential variables on dynamic networks.
+The PSID simulation summary below is the authoritative assembled DAE dimension.
+Passive standard loads are converted to FixedAdmittance where applicable.
+LoadChange perturbations in this fault-only run: 0
+NetworkSwitch perturbations submitted: 2
+FixedAdmittance elements add no independent differential states.
+
+7. NATIVE SIMULATION AND RESULTS SUMMARIES
+------------------------------------------------------------------------------
+DAE system dimensions (queried from the assembled simulation):
+  Full DAE initial-state vector dimension: 313
+  DAE derivative vector dimension: 313
+  Differential variables: 313
+  Algebraic variables: 0
+
+PSID SIMULATION (native package summary):
+Simulation Summary
+┌─────────────────────────┬──────────────────────┐
+│ Property                │ Value                │
+├─────────────────────────┼──────────────────────┤
+│ Status                  │ SIMULATION_FINALIZED │
+│ Simulation Type         │ Residual Model       │
+│ Initialized?            │ Yes                  │
+│ Multimachine system?    │ Yes                  │
+│ Time Span               │ (0.0, 0.5)           │
+│ Number of States        │ 313                  │
+│ Number of Perturbations │ 2                    │
+└─────────────────────────┴──────────────────────┘
+
+
+
+PSID RESULTS (native package summary):
+Simulation Results Summary
+┌────────────────────────────┬─────────────┐
+│ Property                   │ Value       │
+├────────────────────────────┼─────────────┤
+│ System Base Power [MVA]    │ 100.0       │
+│ System Base Frequency [Hz] │ 60.0        │
+│ Time Span                  │ (0.0, 0.5)  │
+│ Total Time Steps           │ 408052      │
+│ Number of States           │ 313         │
+│ Total solve time           │ 225.7846984 │
+└────────────────────────────┴─────────────┘
+
+
+
+8. PARAMETERS, FILES AND REPRODUCIBILITY
+------------------------------------------------------------------------------
+Main simulation source: C:\Users\ajeye\OneDrive\Desktop\VPD_TPWRS_Project\EMT_Scripts\VPDPaper_EMTScripts\run_ieee39_fault.jl 
+Network case generator: case39_matpower.jl
+Physical model and experiment settings: emt_parameters.jl
+Figure buses: [1, 2, 3, 15, 16, 21, 27, 30, 31, 39]
+Export: voltage, angle and network P/Q only; no frequency CSV files.
+Written MATPOWER network: C:\Users\ajeye\OneDrive\Desktop\VPD_TPWRS_Project\EMT_Scripts\VPDPaper_EMTScripts\modified_ieee39.m
+VPD export manifest: C:\Users\ajeye\OneDrive\Desktop\VPD_TPWRS_Project\EMT_Scripts\VPDPaper_EMTScripts\plots\csv\Runtime_vpd_fault_line1_2_Bus_030\vpd_export_manifest.csv
+VPD export folder: C:\Users\ajeye\OneDrive\Desktop\VPD_TPWRS_Project\EMT_Scripts\VPDPaper_EMTScripts\plots\csv\Runtime_vpd_fault_line1_2_Bus_030
+Every unit's assembled controller, filter and machine parameters are listed in Section 5.
+Every dynamic branch's r/x/b parameters are listed in Section 6.
+All three source files are copied into this folder after report generation.
+WARNING: Exported VPD post-processing may have its own filters; this report describes EMT internals only.
